@@ -1,0 +1,1 @@
+"./acceleration.obj" "./as.obj" "./bmp_as.obj" "./main.obj" "./menu.obj" "../lnk_cc430f6137.cmd" -llibmath.a -llibc.a 
