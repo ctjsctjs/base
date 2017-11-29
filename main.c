@@ -1,4 +1,4 @@
-#include <msp430.h> 
+#include <msp430.h>
 #include <stdio.h>
 #include "as.h"
 #include "acceleration.h"
@@ -34,6 +34,8 @@ void lcd_init(void)
 /*
  * main.c
  */
+
+
 int main(void)
 {
 	WDTCTL = WDTPW | WDTHOLD;	// Stop watchdog timer
@@ -52,11 +54,15 @@ int main(void)
 
 
 	// *************************************************************************************************
-
+	setPatt();
 
 	while(1) {
 		do_acceleration_measurement();
 		display_acceleration();
+
+		if (BUTTON_STAR_IS_PRESSED){
+			setPatt();
+		}
 	}
 	//return 0;
 }

@@ -44,8 +44,56 @@
  */
 
 #define BIT(x) (1uL << (x))
-#define patLength 30
-#define patSeq 15
+#define patLength 4
+
+//6 Bytes - 4 / 4 / 4 / 4 / 4 / 4
+// count / minutes / seconds / dd / mm / yy
+extern unsigned char exercise11[(48u)];
+extern unsigned char exercise12[(48u)];
+extern unsigned char exercise13[(48u)];
+extern unsigned char exercise21[(48u)];
+extern unsigned char exercise22[(48u)];
+extern unsigned char exercise23[(48u)];
+extern unsigned char exercise31[(48u)];
+extern unsigned char exercise32[(48u)];
+extern unsigned char exercise33[(48u)];
+extern unsigned char exercise41[(48u)];
+extern unsigned char exercise42[(48u)];
+extern unsigned char exercise43[(48u)];
+extern unsigned char exercise51[(48u)];
+extern unsigned char exercise52[(48u)];
+extern unsigned char exercise53[(48u)];
+extern unsigned char exercise61[(48u)];
+extern unsigned char exercise62[(48u)];
+extern unsigned char exercise63[(48u)];
+extern unsigned char exercise71[(48u)];
+extern unsigned char exercise72[(48u)];
+extern unsigned char exercise73[(48u)];
+
+//Data type to be used for an easier life (Accomodates the values 0-255
+//extern u8 some_variable_name_here;
+
+unsigned char exercise11[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise12[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise13[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise21[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise22[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise23[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise31[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise32[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise33[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise41[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise42[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise43[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise51[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise52[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise53[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise61[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise62[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise63[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise71[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise72[] = {0, 0, 0, 0, 0, 0};
+unsigned char exercise73[] = {0, 0, 0, 0, 0, 0};
 
 // LCD Segments
 #define LCD_A    BIT4
@@ -214,121 +262,78 @@ void do_acceleration_measurement(void)
 // @return      none
 // *************************************************************************************************
 //void display_acceleration(unsigned char line, unsigned char update)
-unsigned int MoveX[patLength];
-unsigned int MoveY[patLength];
-unsigned int MoveZ[patLength];
 
-int timesX=0;
-int timesY=0;
-int timesZ=0;
 
-void reset(char letter){
-	int i;
-	if (letter == 'x'){
-		for (i = 0; i < patLength; i++) {
-			MoveX[i] = 0;
+
+unsigned int pattern=0;
+unsigned int curPatt=0;
+unsigned int nextMove;
+
+
+void pattReset() {
+	curPatt=0;
+};
+
+void setPatt() {
+	pattReset();
+	nextMove = 1;
+
+	pattern++;
+	if (pattern > 3){
+		pattern = 1;
+	}
+};
+
+void push() {
+	curPatt++;
+	LCDM2 = LCD_Char_Map[curPatt];          // Display Character
+};
+
+void checkValid() {
+	if (curPatt == patLength){
+		pattReset();
+		exercise11[0]++;
+		LCDM4 = LCD_Char_Map[exercise11[0]];          // Display Character
+	}
+};
+
+
+void checkAcc(unsigned int x, unsigned int y, unsigned int z) {
+	if (pattern==1){
+		if (x < 20 && y > 80 && z < 20 && nextMove == 1) {
+			push();
+			checkValid();
+			nextMove = 0;
 		}
-	} else if(letter == 'y'){
-		for (i = 0; i < patLength; i++) {
-			MoveY[i] = 0;
+		else if (x < 20 && y < 20 && z > 80 && nextMove == 0) {
+			push();
+			checkValid();
+			nextMove = 1;
 		}
-	} else if(letter == 'z') {
-		for (i = 0; i < patLength; i++) {
-			MoveZ[i] = 0;
+	} else if (pattern==2){
+		if (x > 80 && y < 20 && z < 20 && nextMove == 1) {
+			push();
+			checkValid();
+			nextMove = 0;
+		}
+		else if (x < 20 && y < 20 && z > 80 && nextMove == 0) {
+			push();
+			checkValid();
+			nextMove = 1;
+		}
+	} else if (pattern==3){
+		if (x > 80 && y < 20 && z < 20 && nextMove == 1) {
+			push();
+			checkValid();
+			nextMove = 0;
+		}
+		else if (x < 20 && y > 80 && z < 20 && nextMove == 0) {
+			push();
+			checkValid();
+			nextMove = 1;
 		}
 	}
-}
-void pushMoveX(unsigned int val) {
-	int i;
-	for (i = patLength; i >= 0; i--)
-	{
-		MoveX[i+1] = MoveX[i];
-	};
-
-	MoveX[0] = val;
-
-	return;
-}
-
-void pushMoveY(unsigned int val) {
-	int i;
-	for (i = patLength; i >= 0; i--)
-	{
-		MoveY[i+1] = MoveY[i];
-	};
-
-	MoveY[0] = val;
-
-	return;
-}
-
-void pushMoveZ(unsigned int val) {
-	int i;
-	for (i = patLength; i >= 0; i--)
-	{
-		MoveZ[i+1] = MoveZ[i];
-	};
-
-	MoveZ[0] = val;
-
-	return;
-}
-
-void detectPatX(int pat) {
-	if (pat == patSeq) {
-		if (timesX==10){
-			timesX=0;
-		}
-		timesX++;
-		LCDM6 = LCD_Char_Map[timesX];
-		reset('x');
-		return;
-	}
-	return;
-}
-
-void detectPatY(int pat) {
-	if (pat == patSeq) {
-		if (timesY==10){
-			timesY=0;
-		}
-		timesY++;
-		LCDM4 = LCD_Char_Map[timesY];
-		reset('y');
-		return;
-	}
-	return;
-}
-
-void detectPatZ(int pat) {
-	if (pat == patSeq) {
-		if (timesZ==10){
-			timesZ=0;
-		}
-		timesZ++;
-		LCDM2 = LCD_Char_Map[timesZ];
-		reset('z');
-		return;
-	}
-	return;
-}
-
-int checkArr(unsigned int arr[]) {
-	int i, sameCount=0, prevNum=0;
-	for (i = 0; i < patLength; i++) {
-		if (prevNum == 1) {
-
-			if (arr[i] == 1) {
-				sameCount++;
-			}
-			else {
-				sameCount = 0;
-			}
-		}
-		prevNum = arr[i];
-	}
-	return (sameCount);
-}
+};
 
 
 void display_acceleration()
@@ -377,7 +382,6 @@ void display_acceleration()
 
 
 		unsigned int valX, valY, valZ;
-		static unsigned int oldX, oldY, oldZ;
 
 		//GET CURRENT ACCEL DATA
 		valX = convert_acceleration_value_to_mgrav(sAccel.xyz[0]) / 10;
@@ -385,29 +389,8 @@ void display_acceleration()
 		valZ = convert_acceleration_value_to_mgrav(sAccel.xyz[2]) / 10;
 
 		//CURRENT ACCEL DATA - PREVIOUS ACCEL DATA TO GET DIRECTION
-		if (valX >= oldX){
-			pushMoveX(1);
-		} else {
-			pushMoveX(0);
-		}
-		if (valY >= oldY){
-			pushMoveY(1);
-		} else {
-			pushMoveY(0);
-		}
-		if (valZ >= oldZ){
-			pushMoveZ(1);
-		} else {
-			pushMoveZ(0);
-		}
+		checkAcc(valX, valY, valZ);
 
-		oldX = valX;
-		oldY = valY;
-		oldZ = valZ;
-
-		detectPatX(checkArr(MoveX));
-		detectPatY(checkArr(MoveY));
-		detectPatZ(checkArr(MoveZ));
 
 
 		// Filter acceleration
