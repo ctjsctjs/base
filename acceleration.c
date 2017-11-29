@@ -44,6 +44,8 @@
  */
 
 #define BIT(x) (1uL << (x))
+#define patLength 30
+#define patSeq 15
 
 // LCD Segments
 #define LCD_A    BIT4
@@ -212,30 +214,128 @@ void do_acceleration_measurement(void)
 // @return      none
 // *************************************************************************************************
 //void display_acceleration(unsigned char line, unsigned char update)
-static char MoveX[10] = {0000000000};
-static unsigned int xCounter = 0;
+unsigned int MoveX[patLength];
+unsigned int MoveY[patLength];
+unsigned int MoveZ[patLength];
 
-void pushMoveX(unsigned int val){
+int timesX=0;
+int timesY=0;
+int timesZ=0;
 
-	unsigned int i;
-	for (i = 0; i < xCounter; i++)
-	    {
-	        MoveX[i] = MoveX[i + 1];
-	    };
-
-	if (xCounter < 11){
-		MoveX[xCounter] = val;
-	} else {
-		xCounter
+void reset(char letter){
+	int i;
+	if (letter == 'x'){
+		for (i = 0; i < patLength; i++) {
+			MoveX[i] = 0;
+		}
+	} else if(letter == 'y'){
+		for (i = 0; i < patLength; i++) {
+			MoveY[i] = 0;
+		}
+	} else if(letter == 'z') {
+		for (i = 0; i < patLength; i++) {
+			MoveZ[i] = 0;
+		}
 	}
 }
+void pushMoveX(unsigned int val) {
+	int i;
+	for (i = patLength; i >= 0; i--)
+	{
+		MoveX[i+1] = MoveX[i];
+	};
+
+	MoveX[0] = val;
+
+	return;
+}
+
+void pushMoveY(unsigned int val) {
+	int i;
+	for (i = patLength; i >= 0; i--)
+	{
+		MoveY[i+1] = MoveY[i];
+	};
+
+	MoveY[0] = val;
+
+	return;
+}
+
+void pushMoveZ(unsigned int val) {
+	int i;
+	for (i = patLength; i >= 0; i--)
+	{
+		MoveZ[i+1] = MoveZ[i];
+	};
+
+	MoveZ[0] = val;
+
+	return;
+}
+
+void detectPatX(int pat) {
+	if (pat == patSeq) {
+		if (timesX==10){
+			timesX=0;
+		}
+		timesX++;
+		LCDM6 = LCD_Char_Map[timesX];
+		reset('x');
+		return;
+	}
+	return;
+}
+
+void detectPatY(int pat) {
+	if (pat == patSeq) {
+		if (timesY==10){
+			timesY=0;
+		}
+		timesY++;
+		LCDM4 = LCD_Char_Map[timesY];
+		reset('y');
+		return;
+	}
+	return;
+}
+
+void detectPatZ(int pat) {
+	if (pat == patSeq) {
+		if (timesZ==10){
+			timesZ=0;
+		}
+		timesZ++;
+		LCDM2 = LCD_Char_Map[timesZ];
+		reset('z');
+		return;
+	}
+	return;
+}
+
+int checkArr(unsigned int arr[]) {
+	int i, sameCount=0, prevNum=0;
+	for (i = 0; i < patLength; i++) {
+		if (prevNum == 1) {
+
+			if (arr[i] == 1) {
+				sameCount++;
+			}
+			else {
+				sameCount = 0;
+			}
+		}
+		prevNum = arr[i];
+	}
+	return (sameCount);
+}
+
 
 void display_acceleration()
 {
 	//    unsigned char *str;
-	unsigned char raw_data;
 	//    unsigned char percent[3];
-	unsigned short accel_data;
+	//unsigned short accel_data;
 
 	// Show warning if acceleration sensor was not initialised properly
 	if (!as_ok)
@@ -278,7 +378,6 @@ void display_acceleration()
 
 		unsigned int valX, valY, valZ;
 		static unsigned int oldX, oldY, oldZ;
-		unsigned int dirX=0, dirY=0, dirZ=0;
 
 		//GET CURRENT ACCEL DATA
 		valX = convert_acceleration_value_to_mgrav(sAccel.xyz[0]) / 10;
@@ -287,58 +386,37 @@ void display_acceleration()
 
 		//CURRENT ACCEL DATA - PREVIOUS ACCEL DATA TO GET DIRECTION
 		if (valX >= oldX){
-			dirX = 1;
 			pushMoveX(1);
 		} else {
 			pushMoveX(0);
 		}
 		if (valY >= oldY){
-			dirY = 1;
+			pushMoveY(1);
+		} else {
+			pushMoveY(0);
 		}
 		if (valZ >= oldZ){
-			dirZ = 1;
+			pushMoveZ(1);
+		} else {
+			pushMoveZ(0);
 		}
 
 		oldX = valX;
 		oldY = valY;
 		oldZ = valZ;
 
-		LCDM2 = LCD_Char_Map[12];	  // Display Z Character
-		//LCDM2 = LCD_Char_Map[2];	  // Display Z Character
-		//LCDM2 = LCD_Char_Map[11];     // Display Y Character
-		//LCDM2 = LCD_Char_Map[10];     // Display X Character
+		detectPatX(checkArr(MoveX));
+		detectPatY(checkArr(MoveY));
+		detectPatZ(checkArr(MoveZ));
 
 
 		// Filter acceleration
-		accel_data = valZ;
-		accel_data = (unsigned short) ((accel_data * 0.2) + (sAccel.data * 0.8));
+		//accel_data = valZ;
+		//accel_data = (unsigned short) ((accel_data * 0.2) + (sAccel.data * 0.8));
 
 		// Store average acceleration
-		sAccel.data = accel_data;
+		//sAccel.data = accel_data;
 
-		// Display acceleration in xxx format
-		unsigned char hundreds, tens, ones;
-		unsigned char *lcdmem;
-
-		// Display sign
-		//if (acceleration_value_is_positive(raw_data))
-		if (MoveX == "1111111111")
-		{
-			hundreds = valX % 1000 / 100;
-			tens = valX % 100 / 10;
-			ones = valX % 10;
-
-			LCDM3 = LCD_Char_Map[hundreds];      // Display Character
-			LCDM4 = LCD_Char_Map[tens];          // Display Character
-			LCDM6 = LCD_Char_Map[ones];          // Display Character
-
-			lcdmem  = (unsigned char *)0x0A20;
-			*lcdmem = (unsigned char)(*lcdmem | (BIT2));	// arrow display
-
-			__delay_cycles(100000);           // Delay ~0.1sec
-			*lcdmem = (unsigned char)(*lcdmem & (BIT2));
-			__no_operation();
-		}
 	}
 }
 

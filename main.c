@@ -57,16 +57,6 @@ int main(void)
 	while(1) {
 		do_acceleration_measurement();
 		display_acceleration();
-		/*
-		if (BUTTON_STAR_IS_PRESSED)
-		{
-			printf("pressed");
-
-
-			demo2();
-		} else {
-			demo3();
-		}*/
 	}
 	//return 0;
 }
